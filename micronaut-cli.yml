@@ -1,0 +1,6 @@
+applicationType: default
+defaultPackage: org.addvert.marketresearch.typeforminsightsgenerator
+testFramework: junit
+sourceLanguage: kotlin
+buildTool: gradle
+features: [app-name, gradle, http-client, junit, kotlin, kotlin-application, logback, neo4j-bolt, netty-server, readme, shade, yaml]

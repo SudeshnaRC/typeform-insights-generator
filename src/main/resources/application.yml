@@ -1,0 +1,26 @@
+micronaut:
+  application:
+    name: typeform-insights-generator
+  server:
+    port: 8080
+
+neo4j:
+  uri: bolt://${NEO4J_HOST:localhost}
+
+typeform:
+  token: ${ACCESS_TOKEN}
+
+datasources:
+  default:
+    url: ${JDBC_BASE_URL:`jdbc:postgresql://localhost:5432`}/market_rearch_typeform?ApplicationName=typeform-insights-generator
+    username: ${JDBC_USER}
+    password: ${JDBC_PASSWORD}
+    driverClassName: ${JDBC_DRIVER::org.postgresql.Driver}
+
+jpa:
+  default:
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: validate
+        show_sql: true
