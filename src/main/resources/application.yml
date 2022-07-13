@@ -6,6 +6,10 @@ micronaut:
 
 neo4j:
   uri: bolt://${NEO4J_HOST:localhost}
+  maxConnectionPoolSize: 50
+  connectionAcquisitionTimeout: 30s
+  username: ${NEO_USER}
+  password: ${NEO_PASSWORD}
 
 typeform:
   token: ${ACCESS_TOKEN}
