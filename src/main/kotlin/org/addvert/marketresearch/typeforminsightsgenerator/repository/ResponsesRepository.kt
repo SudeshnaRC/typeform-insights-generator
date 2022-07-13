@@ -30,7 +30,7 @@ class ResponsesRepository : IResponsesRepository {
 
     override fun relationshipStatement(relationship: Relationship): String {
         val relationshipString = relationship.question
-            .replace("\\p{Punct}".toRegex(), "")
+            .replace("\\p{P}".toRegex(), "")
             .replace(" ", "_")
             .toUpperCase()
         return "-[:$relationshipString {id: ['${relationship.id}']}]->"
