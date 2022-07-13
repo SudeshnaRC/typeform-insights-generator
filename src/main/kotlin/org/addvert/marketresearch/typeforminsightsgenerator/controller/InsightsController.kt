@@ -26,7 +26,7 @@ class InsightsController(
             val responses = responsesClient.fetchResponses("Bearer ${configuration.token}", formId)
             formHandler.persistFormQuestions(questions)
             formHandler.persistFormResponses(formId, responses)
-            HttpResponse.created("Form data for [$formId] have been successfully persisted to database.")
+            HttpResponse.created("Form data for [$formId] has been successfully persisted to database.")
 
         } catch (e: Exception) {
 
