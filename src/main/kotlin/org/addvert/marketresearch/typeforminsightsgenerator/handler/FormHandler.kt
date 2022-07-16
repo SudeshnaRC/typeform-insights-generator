@@ -7,6 +7,7 @@ import org.addvert.marketresearch.typeforminsightsgenerator.handler.exceptions.I
 import org.addvert.marketresearch.typeforminsightsgenerator.model.graph.*
 import org.addvert.marketresearch.typeforminsightsgenerator.model.psql.FormEntity
 import org.addvert.marketresearch.typeforminsightsgenerator.model.psql.FormQuestion
+import org.addvert.marketresearch.typeforminsightsgenerator.model.psql.PartialForm
 import org.addvert.marketresearch.typeforminsightsgenerator.model.typeform.AnswerType
 import org.addvert.marketresearch.typeforminsightsgenerator.model.typeform.Form
 import org.addvert.marketresearch.typeforminsightsgenerator.model.typeform.Responses
@@ -83,11 +84,13 @@ class FormHandler(
         form.fields?.forEach { question ->
             formRepository.update(
                 FormEntity(
-                    FormQuestion(
+                    formQuestion = FormQuestion(
                         form.id ?: throw Exception(),
                         question.ref ?: throw InvalidFormFieldRefException(""),
-                    ), question.title ?: throw Exception(),
-                    question.type ?: throw Exception()
+                    ),
+                    form = PartialForm(form.id),
+                    questionTitle = question.title ?: throw Exception(),
+                    questionType = question.type ?: throw Exception()
                 )
             )
         }
@@ -149,5 +152,11 @@ class FormHandler(
 
     private fun numberStatement(numberNode: NumberNode): String {
         return responsesRepository.nodeStatement(numberNode)
+    }
+
+    fun retrieveAllInsightsByFormId(formId: String){
+        val formEntityList = formRepository.findAllByForm(PartialForm(formId))
+
+
     }
 }

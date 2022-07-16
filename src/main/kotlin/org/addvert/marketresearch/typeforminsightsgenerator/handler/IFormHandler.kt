@@ -7,4 +7,5 @@ import org.addvert.marketresearch.typeforminsightsgenerator.model.typeform.Respo
 interface IFormHandler {
     fun persistFormResponses(formId: String, responses: Responses)
     fun persistForm(form: Form)
+
 }

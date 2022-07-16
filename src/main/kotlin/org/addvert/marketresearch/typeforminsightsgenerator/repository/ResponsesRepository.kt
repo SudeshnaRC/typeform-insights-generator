@@ -51,12 +51,13 @@ class ResponsesRepository : IResponsesRepository {
 
     override fun createPropertyGraph(mergeNodes: String, relationship: String) {
         val fullStatement = mergeNodes + merge + respondent + relationship + answer
-        commitCypher(fullStatement)
+        runCypherQuery(fullStatement)
     }
 
-    private fun commitCypher(statement: String) {
+    private fun runCypherQuery(statement: String) {
         driver?.session().use { s ->
             s?.writeTransaction { tx -> tx.run(statement) }
         }
     }
+
 }

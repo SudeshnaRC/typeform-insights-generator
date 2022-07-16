@@ -1,16 +1,16 @@
 package org.addvert.marketresearch.typeforminsightsgenerator.model.psql
-import javax.persistence.Column
-import javax.persistence.EmbeddedId
-import javax.persistence.Entity
-import javax.persistence.Table
+import javax.persistence.*
 
 @Entity
 @Table(name = "form_questions")
 data class FormEntity(
     @EmbeddedId
     var formQuestion: FormQuestion = FormQuestion(),
+    @Embedded
+    var form: PartialForm = PartialForm(),
     @Column(name = "question_title")
     val questionTitle: String = "",
     @Column(name = "question_type")
     val questionType: String = ""
+
 )

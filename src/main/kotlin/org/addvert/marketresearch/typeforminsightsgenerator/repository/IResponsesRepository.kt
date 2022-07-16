@@ -10,4 +10,6 @@ interface IResponsesRepository {
     fun nodeStatement(choiceNode: ChoiceNode) : String
     fun relationshipStatement(relationship: Relationship): String
     fun createPropertyGraph(mergeNodes: String, relationship: String)
+
+
 }
