@@ -9,12 +9,12 @@ import org.addvert.marketresearch.typeforminsightsgenerator.model.typeform.Form
 
 
 @Client(TypeformConfiguration.TYPEFORM_API_URL)
-interface IQuestionsClient {
+interface IFormClient {
 
     @Get("/forms/{formId}")
-    fun fetchQuestions(
+    fun fetchForm(
         @Header(name = "Authorization") authorization: String?,
         @PathVariable formId: String
-    ): Form
+    ): String?
 
 }

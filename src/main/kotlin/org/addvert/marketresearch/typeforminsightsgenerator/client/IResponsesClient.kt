@@ -14,6 +14,6 @@ interface IResponsesClient {
     fun fetchResponses(
         @Header(name = "Authorization") authorization: String?,
         @PathVariable formId: String
-    ): Responses
+    ): String?
 
 }

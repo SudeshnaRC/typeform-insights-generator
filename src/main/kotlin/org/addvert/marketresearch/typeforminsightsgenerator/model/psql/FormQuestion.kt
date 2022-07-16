@@ -7,7 +7,7 @@ import javax.persistence.Embeddable
 @Embeddable
 data class FormQuestion(
     @Column(name = "form_id")
-    private val formId: String = "",
+    private var formId: String = "",
     @Column(name = "question_id")
-    val questionId: String = ""
+    private var questionId: String = ""
 ) : Serializable

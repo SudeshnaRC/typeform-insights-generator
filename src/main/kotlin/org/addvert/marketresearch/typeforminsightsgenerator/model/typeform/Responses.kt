@@ -1,51 +1,71 @@
 package org.addvert.marketresearch.typeforminsightsgenerator.model.typeform
 
-import io.micronaut.core.annotation.Introspected
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import com.beust.klaxon.Json
 
-@Introspected
-@Serializable
 data class Responses(
-    @SerialName("total_items") val totalItems: Int?,
-    @SerialName("page_count") val pageCount: Int?,
-    @SerialName("items") val items: List<Item>?
+    @Json(name = "total_items")
+    val totalItems: Int? = null,
+    @Json(name = "page_count")
+    val pageCount: Int? = null,
+    @Json(name = "items")
+    val items: List<Item>? = null
 ) {
-    @Introspected
-    @Serializable
     data class Item(
-        @SerialName("response_id") val responseId: String,
-        @SerialName("answers") val answers: List<Answer>?
+        @Json(name = "response_id")
+        val responseId: String? = null,
+        @Json(name = "answers")
+        val answers: List<Answer>? = null
     ) {
-        @Introspected
-        @Serializable
         data class Answer(
-            @SerialName("field") val field: Field,
-            @SerialName("type") val type: String,
-            @SerialName("text") val text: String?,
-            @SerialName("choice") val choice: Choice?,
-            @SerialName("choices") val choices: List<Choice>?,
-            @SerialName("email") val email: String?,
-            @SerialName("url") val url: String?,
-            @SerialName("file_url") val fileUrl: String?,
-            @SerialName("boolean") val boolean: Boolean?,
-            @SerialName("number") val number: Int?,
-            @SerialName("date") val date: String?,
-            @SerialName("payment") val payment: String?
+            @Json(name = "field")
+            val field: Field? = null,
+            @Json(name = "type")
+            val type: String? = null,
+            @Json(name = "text")
+            val text: String? = null,
+            @Json(name = "choice")
+            val choice: Choice? = null,
+            @Json(name = "choices")
+            val choices: Choices? = null,
+            @Json(name = "email")
+            val email: String? = null,
+            @Json(name = "url")
+            val url: String? = null,
+            @Json(name = "file_url")
+            val fileUrl: String? = null,
+            @Json(name = "boolean")
+            val boolean: Boolean? = null,
+            @Json(name = "number")
+            val number: Int? = null,
+            @Json(name = "date")
+            val date: String? = null,
+            @Json(name = "payment")
+            val payment: String? = null
         ) {
-            @Introspected
-            @Serializable
             data class Field(
-                @SerialName("id") val id: String,
-                @SerialName("type") val type: String,
-                @SerialName("ref") val ref: String
+                @Json(name = "id")
+                val id: String? = null,
+                @Json(name = "type")
+                val type: String? = null,
+                @Json(name = "ref")
+                val ref: String? = null
             )
-            @Introspected
-            @Serializable
             data class Choice(
-                @SerialName("id") val id: String,
-                @SerialName("ref") val ref: String,
-                @SerialName("label") val label: String
+                @Json(name = "id")
+                val id: String? = null,
+                @Json(name = "ref")
+                val ref: String? = null,
+                @Json(name = "label")
+                val label: String? = null
+            )
+
+            data class Choices(
+                @Json(name = "ids")
+                val ids: List<String>? = null,
+                @Json(name = "refs")
+                val refs: List<String>? = null,
+                @Json(name = "labels")
+                val labels: List<String>? = null
             )
         }
     }

@@ -1,8 +1,14 @@
 package org.addvert.marketresearch.typeforminsightsgenerator.model.typeform
 
-enum class AnswerType(s: String) {
-    TEXT("text"),
-    CHOICE("choice"),
-    CHOICES("choices"),
-    BOOLEAN("boolean")
+enum class AnswerType {
+    TEXT,
+    CHOICE,
+    CHOICES,
+    EMAIL,
+    URL,
+    FILEURL,
+    BOOLEAN,
+    NUMBER,
+    DATE,
+    PAYMENT
 }

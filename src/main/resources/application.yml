@@ -2,14 +2,14 @@ micronaut:
   application:
     name: typeform-insights-generator
   server:
-    port: 8080
+    port: 9080
 
 neo4j:
   uri: bolt://${NEO4J_HOST:localhost}
   maxConnectionPoolSize: 50
   connectionAcquisitionTimeout: 30s
-  username: ${NEO_USER}
-  password: ${NEO_PASSWORD}
+  username: neo4j
+  password: bitnami
 
 typeform:
   token: ${ACCESS_TOKEN}

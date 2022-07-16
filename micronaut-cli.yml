@@ -1,6 +1,6 @@
 applicationType: default
 defaultPackage: org.addvert.marketresearch.typeforminsightsgenerator
-testFramework: junit
+testFramework: spock
 sourceLanguage: kotlin
-buildTool: gradle
-features: [app-name, gradle, http-client, junit, kotlin, kotlin-application, logback, neo4j-bolt, netty-server, readme, shade, yaml]
+buildTool: gradle_kotlin
+features: [annotation-api, app-name, gradle, http-client, kotlin, kotlin-application, netty-server, readme, shade, spock, yaml]

@@ -1,6 +1,9 @@
 package org.addvert.marketresearch.typeforminsightsgenerator.handler
 
 
+import jakarta.inject.Singleton
+import org.addvert.marketresearch.typeforminsightsgenerator.handler.exceptions.InvalidFormFieldRefException
+import org.addvert.marketresearch.typeforminsightsgenerator.handler.exceptions.InvalidResponseIDException
 import org.addvert.marketresearch.typeforminsightsgenerator.model.graph.*
 import org.addvert.marketresearch.typeforminsightsgenerator.model.psql.FormEntity
 import org.addvert.marketresearch.typeforminsightsgenerator.model.psql.FormQuestion
@@ -8,84 +11,143 @@ import org.addvert.marketresearch.typeforminsightsgenerator.model.typeform.Answe
 import org.addvert.marketresearch.typeforminsightsgenerator.model.typeform.Form
 import org.addvert.marketresearch.typeforminsightsgenerator.model.typeform.Responses
 import org.addvert.marketresearch.typeforminsightsgenerator.model.typeform.Responses.Item.Answer
-import org.addvert.marketresearch.typeforminsightsgenerator.repository.IQuestionsRepository
+import org.addvert.marketresearch.typeforminsightsgenerator.model.typeform.Responses.Item.Answer.Choice
+import org.addvert.marketresearch.typeforminsightsgenerator.repository.IFormRepository
 import org.addvert.marketresearch.typeforminsightsgenerator.repository.IResponsesRepository
+import org.apache.logging.log4j.kotlin.Logging
 
+@Singleton
 class FormHandler(
     private val responsesRepository: IResponsesRepository,
-    private val questionsRepository: IQuestionsRepository
-) : IFormHandler {
+    private val formRepository: IFormRepository
+) : IFormHandler, Logging {
+
     override fun persistFormResponses(formId: String, responses: Responses) {
         responses.items?.forEach { item ->
+
             item.answers?.forEach { answer ->
-
-
                 //Lots of duplication in this, I don't like it at all.
+                logger.info(answer)
+                //TODO: Replace all generic exceptions in this class with custom exceptions
+                val questionId = answer.field?.ref ?: throw InvalidFormFieldRefException("")
 
-                    val questionId = answer.field.ref
-                    val questionString = questionsRepository
-                        .findById(FormQuestion(formId, questionId))
-                        .get()
-                        .questionTitle
-                    val questionRelationshipStatement = responsesRepository
-                        .relationshipStatement(Relationship(questionString, questionId))
-                    val respondentNodeStatement = responsesRepository
-                        .nodeStatement(RespondentNode(item.responseId))
-                    var answerNodeStatement: String
+                val questionString = formRepository
+                    .findByFormQuestion(FormQuestion(formId, questionId))
+                    .get()
+                    .questionTitle
 
-                if (answer.type != AnswerType.CHOICES.name) {
-                    answerNodeStatement = mapToAnswerStatement(answer)
+                val questionRelationshipStatement = responsesRepository
+                    .relationshipStatement(Relationship(questionString, questionId))
 
-                } else{
+                val respondentNodeStatement = responsesRepository
+                    .nodeStatement(RespondentNode(item.responseId ?: throw InvalidResponseIDException("")))
+
+                if (answer.type != AnswerType.CHOICES.name.lowercase()) {
+                    val answerNodeStatement = mapToAnswerStatement(answer)
+                    val mergeNodes = respondentNodeStatement + answerNodeStatement
+                    responsesRepository.createPropertyGraph(
+                        mergeNodes,
+                        questionRelationshipStatement
+                    )
+
+                } else {
                     answer.choices?.let { choices ->
-                        choices.forEach {
-                            val simpleAnswer = SimpleAnswer(type = AnswerType.CHOICE.name, choice = it)
-                            choiceStatement(ChoiceNode(
-                                it.id,
-                                it.ref,
-                                it.label
-                            ))
+                        val lastIndex = choices.ids?.lastIndex ?: throw Exception()
+                        (0..lastIndex).forEach {
+                            val simpleAnswer = Answer(
+                                type = AnswerType.CHOICE.name.lowercase(),
+                                choice = Choice(
+                                    choices.ids[it],
+                                    choices.refs?.get(it),
+                                    choices.labels?.get(it)
+                                )
+                            )
+
+                            val answerNodeStatement = mapToAnswerStatement(simpleAnswer)
+                            val mergeNodes = respondentNodeStatement + answerNodeStatement
+                            responsesRepository.createPropertyGraph(
+                                mergeNodes,
+                                questionRelationshipStatement
+                            )
                         }
-                        answerNodeStatement = mapToSimpleAnswerStatement(simpleAnswer)
+
                     }
 
                 }
-                val fullStatement = respondentNodeStatement + questionRelationshipStatement + answerNodeStatement
-                responsesRepository.createPropertyGraph(fullStatement)
+
             }
         }
     }
 
-    override fun persistFormQuestions(form: Form) {
-        form.fields.forEach { question ->
-            questionsRepository.update(
+    override fun persistForm(form: Form) {
+        form.fields?.forEach { question ->
+            formRepository.update(
                 FormEntity(
                     FormQuestion(
-                        form.id, question.id
-                    ), question.title
+                        form.id ?: throw Exception(),
+                        question.ref ?: throw InvalidFormFieldRefException(""),
+                    ), question.title ?: throw Exception(),
+                    question.type ?: throw Exception()
                 )
             )
         }
     }
 
-    private fun mapToAnswerStatement(answer: Answer): String? {
+    private fun mapToAnswerStatement(answer: Answer): String {
 
         return when (answer.type) {
-            AnswerType.TEXT.name -> answer.text?.let { textStatement(TextNode(it)) }
-            AnswerType.CHOICE.name -> answer.choice?.let { choiceStatement(ChoiceNode(it.id, it.ref, it.label)) }
-            AnswerType.BOOLEAN.name -> answer.boolean?.let { booleanStatement(BooleanNode(it)) }
-            else -> null
-        }
+            AnswerType.TEXT.name.lowercase() -> {
+                answer.text?.let { textStatement(TextNode(it)) }
+            }
+            AnswerType.EMAIL.name.lowercase() -> {
+                answer.email?.let { textStatement(TextNode(it)) }
+            }
+            AnswerType.URL.name.lowercase() -> {
+                answer.url?.let { textStatement(TextNode(it)) }
+            }
+            AnswerType.FILEURL.name.lowercase() -> {
+                answer.fileUrl?.let { textStatement(TextNode(it)) }
+            }
+            AnswerType.BOOLEAN.name.lowercase() -> {
+                answer.boolean?.let { booleanStatement(BooleanNode(it)) }
+            }
+            AnswerType.NUMBER.name.lowercase() -> {
+                answer.number?.let { numberStatement(NumberNode(it)) }
+            }
+            AnswerType.DATE.name.lowercase() -> {
+                answer.date?.let { textStatement(TextNode(it)) }
+            }
+            AnswerType.PAYMENT.name.lowercase() -> {
+                answer.payment?.let { textStatement(TextNode(it)) }
+            }
+            else -> {
+                answer.choice?.let {
+                    choiceStatement(
+                        ChoiceNode(
+                            it.id ?: throw Exception(),
+                            it.ref,
+                            it.label
+                        )
+                    )
+                }
+            }
+        } ?: throw Exception()
 
     }
 
-    private fun textStatement(textNode: TextNode): String{
+    private fun textStatement(textNode: TextNode): String {
         return responsesRepository.nodeStatement(textNode)
     }
-    private fun choiceStatement(choiceNode: ChoiceNode): String{
+
+    private fun choiceStatement(choiceNode: ChoiceNode): String {
         return responsesRepository.nodeStatement(choiceNode)
     }
-    private fun booleanStatement(booleanNode: BooleanNode): String{
+
+    private fun booleanStatement(booleanNode: BooleanNode): String {
         return responsesRepository.nodeStatement(booleanNode)
+    }
+
+    private fun numberStatement(numberNode: NumberNode): String {
+        return responsesRepository.nodeStatement(numberNode)
     }
 }
