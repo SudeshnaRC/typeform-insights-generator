@@ -25,59 +25,42 @@ class FormHandler(
 
     override fun persistFormResponses(formId: String, responses: Responses) {
         responses.items?.forEach { item ->
+            val respondentNode =
+                addRespondentNodeToInMemoryCypherQuery(item.responseId ?: throw InvalidResponseIDException(""))
 
             item.answers?.forEach { answer ->
-                //Lots of duplication in this, I don't like it at all.
-                logger.info(answer)
+
                 //TODO: Replace all generic exceptions in this class with custom exceptions
                 val questionId = answer.field?.ref ?: throw InvalidFormFieldRefException("")
 
-                val questionString = formRepository
-                    .findByFormQuestion(FormQuestion(formId, questionId))
-                    .get()
-                    .questionTitle
-
-                val questionRelationshipStatement = responsesRepository
-                    .relationshipStatement(Relationship(questionString, questionId))
-
-                val respondentNodeStatement = responsesRepository
-                    .nodeStatement(RespondentNode(item.responseId ?: throw InvalidResponseIDException("")))
-
                 if (answer.type != AnswerType.CHOICES.name.lowercase()) {
-                    val answerNodeStatement = mapToAnswerStatement(answer)
-                    val mergeNodes = respondentNodeStatement + answerNodeStatement
-                    responsesRepository.createPropertyGraph(
-                        mergeNodes,
-                        questionRelationshipStatement
-                    )
+                    val answerNode = addAnswerNodeToInMemoryCypherQuery(answer)
+                    val relationship = addRelationshipToInMemoryCypherQuery(formId, questionId)
+                    val fullStatement = respondentNode + answerNode + relationship
+                    responsesRepository.createPropertyGraph(fullStatement)
 
                 } else {
                     answer.choices?.let { choices ->
-                        val lastIndex = choices.ids?.lastIndex ?: throw Exception()
-                        (0..lastIndex).forEach {
+                        choices.ids?.indices?.forEach {
                             val simpleAnswer = Answer(
                                 type = AnswerType.CHOICE.name.lowercase(),
                                 choice = Choice(
-                                    choices.ids[it],
-                                    choices.refs?.get(it),
-                                    choices.labels?.get(it)
+                                    label = choices.labels?.get(it)
                                 )
                             )
 
-                            val answerNodeStatement = mapToAnswerStatement(simpleAnswer)
-                            val mergeNodes = respondentNodeStatement + answerNodeStatement
-                            responsesRepository.createPropertyGraph(
-                                mergeNodes,
-                                questionRelationshipStatement
-                            )
+                            val answerNode = addAnswerNodeToInMemoryCypherQuery(simpleAnswer)
+                            val relationship = addRelationshipToInMemoryCypherQuery(formId, questionId)
+                            val fullStatement = respondentNode + answerNode + relationship
+                            responsesRepository.createPropertyGraph(fullStatement)
                         }
 
                     }
 
                 }
-
             }
         }
+        responsesRepository.commitBatchInMemoryCypherQuery()
     }
 
     override fun persistForm(form: Form) {
@@ -96,67 +79,63 @@ class FormHandler(
         }
     }
 
-    private fun mapToAnswerStatement(answer: Answer): String {
+    private fun addRespondentNodeToInMemoryCypherQuery(responseId: String): String {
+        return responsesRepository
+            .nodeStatement(RespondentNode(responseId))
+    }
+
+    private fun addRelationshipToInMemoryCypherQuery(formId: String, questionId: String): String {
+        val formEntity = formRepository
+            .findByFormQuestion(FormQuestion(formId, questionId))
+            .get()
+        val questionString = formEntity.questionTitle
+        val questionType = formEntity.questionType
+
+        return responsesRepository
+            .relationshipStatement(QuestionRelationship(questionString, questionId, questionType))
+
+    }
+
+    private fun addAnswerNodeToInMemoryCypherQuery(answer: Answer): String {
 
         return when (answer.type) {
             AnswerType.TEXT.name.lowercase() -> {
-                answer.text?.let { textStatement(TextNode(it)) }
+                answer.text?.let { responsesRepository.nodeStatement(AnswerNode(it)) }
             }
             AnswerType.EMAIL.name.lowercase() -> {
-                answer.email?.let { textStatement(TextNode(it)) }
+                answer.email?.let { responsesRepository.nodeStatement(AnswerNode(it)) }
             }
             AnswerType.URL.name.lowercase() -> {
-                answer.url?.let { textStatement(TextNode(it)) }
+                answer.url?.let { responsesRepository.nodeStatement(AnswerNode(it)) }
             }
             AnswerType.FILEURL.name.lowercase() -> {
-                answer.fileUrl?.let { textStatement(TextNode(it)) }
+                answer.fileUrl?.let { responsesRepository.nodeStatement(AnswerNode(it)) }
             }
             AnswerType.BOOLEAN.name.lowercase() -> {
-                answer.boolean?.let { booleanStatement(BooleanNode(it)) }
+                answer.boolean?.let { responsesRepository.nodeStatement(AnswerNode(it)) }
             }
             AnswerType.NUMBER.name.lowercase() -> {
-                answer.number?.let { numberStatement(NumberNode(it)) }
+                answer.number?.let { responsesRepository.nodeStatement(AnswerNode(it)) }
             }
             AnswerType.DATE.name.lowercase() -> {
-                answer.date?.let { textStatement(TextNode(it)) }
+                answer.date?.let { responsesRepository.nodeStatement(AnswerNode(it)) }
             }
             AnswerType.PAYMENT.name.lowercase() -> {
-                answer.payment?.let { textStatement(TextNode(it)) }
+                answer.payment?.let { responsesRepository.nodeStatement(AnswerNode(it)) }
             }
             else -> {
                 answer.choice?.let {
-                    choiceStatement(
-                        ChoiceNode(
-                            it.id ?: throw Exception(),
-                            it.ref,
-                            it.label
-                        )
-                    )
+                    it.label?.let { label -> responsesRepository.nodeStatement(AnswerNode(label)) }
+                        ?: responsesRepository.nodeStatement(AnswerNode("other"))
                 }
             }
         } ?: throw Exception()
-
     }
 
-    private fun textStatement(textNode: TextNode): String {
-        return responsesRepository.nodeStatement(textNode)
-    }
 
-    private fun choiceStatement(choiceNode: ChoiceNode): String {
-        return responsesRepository.nodeStatement(choiceNode)
-    }
-
-    private fun booleanStatement(booleanNode: BooleanNode): String {
-        return responsesRepository.nodeStatement(booleanNode)
-    }
-
-    private fun numberStatement(numberNode: NumberNode): String {
-        return responsesRepository.nodeStatement(numberNode)
-    }
-
-    fun retrieveAllInsightsByFormId(formId: String){
-        val formEntityList = formRepository.findAllByForm(PartialForm(formId))
-
-
-    }
+//    fun retrieveAllInsightsByFormId(formId: String){
+//        val formEntityList = formRepository.findAllByForm(PartialForm(formId))
+//
+//
+//    }
 }

@@ -11,5 +11,5 @@ import java.util.Optional
 interface IFormRepository : CrudRepository<FormEntity, FormQuestion>{
 
     fun findByFormQuestion(formQuestion: FormQuestion): Optional<FormEntity>
-    fun findAllByForm(form : PartialForm): List<FormEntity>
+//    fun findAllByForm(form : PartialForm): List<FormEntity>
 }

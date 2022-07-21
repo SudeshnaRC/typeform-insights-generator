@@ -3,6 +3,7 @@ micronaut:
     name: typeform-insights-generator
   server:
     port: 9080
+    read-idle-timeout: "30s"
 
 neo4j:
   uri: bolt://${NEO4J_HOST:localhost}

@@ -1,7 +1,7 @@
 package org.addvert.marketresearch.typeforminsightsgenerator.handler
 
 import org.addvert.marketresearch.typeforminsightsgenerator.model.graph.ChoiceNode
-import org.addvert.marketresearch.typeforminsightsgenerator.model.graph.Relationship
+import org.addvert.marketresearch.typeforminsightsgenerator.model.graph.QuestionRelationship
 import org.addvert.marketresearch.typeforminsightsgenerator.model.graph.RespondentNode
 import org.addvert.marketresearch.typeforminsightsgenerator.model.psql.FormEntity
 import org.addvert.marketresearch.typeforminsightsgenerator.model.psql.FormQuestion
@@ -35,7 +35,7 @@ class FormHandlerTest extends Specification {
     def "Should successfully persist correct property graph to database for passed response object"(){
         given:
         formRepository.findById(formQuestion) >> Optional.of(formEntity)
-        responsesRepository.relationshipStatement(_ as Relationship) >>  "-[:HOW_OLD_ARE_YOU_? {id: '9aa98a25-81b2-4cf4-9624-ee576673b302'}]->"
+        responsesRepository.relationshipStatement(_ as QuestionRelationship) >>  "-[:HOW_OLD_ARE_YOU_? {id: '9aa98a25-81b2-4cf4-9624-ee576673b302'}]->"
         responsesRepository.nodeStatement(_ as RespondentNode) >> "CREATE (respondentNode:RespondentNode { id: '52ihzjrpd81vni6gdt6n52ihzjrkk0mf'})"
         responsesRepository.nodeStatement(_ as ChoiceNode) >> "CREATE (choiceNode: ChoiceNode { id: 'q0idYhWH2HP5', ref: '6fefdf72-51d0-4f7c-aefe-aef32fa71951', label: '55-64'})"
 
@@ -52,7 +52,7 @@ class FormHandlerTest extends Specification {
         def item = new Responses.Item("52ihzjrpd81vni6gdt6n52ihzjrkk0mf", [answer])
         def responses = new Responses(1945, 78, [item])
         formRepository.findById(formQuestion) >> Optional.of(formEntity)
-        responsesRepository.relationshipStatement(_ as Relationship) >>  "-[:HOW_OLD_ARE_YOU_? {id: '9aa98a25-81b2-4cf4-9624-ee576673b302'}]->"
+        responsesRepository.relationshipStatement(_ as QuestionRelationship) >>  "-[:HOW_OLD_ARE_YOU_? {id: '9aa98a25-81b2-4cf4-9624-ee576673b302'}]->"
         responsesRepository.nodeStatement(_ as RespondentNode) >> "CREATE (respondentNode:RespondentNode { id: '52ihzjrpd81vni6gdt6n52ihzjrkk0mf'})"
         responsesRepository.nodeStatement(_ as ChoiceNode) >> "CREATE (choiceNode: ChoiceNode { id: 'q0idYhWH2HP5', ref: '6fefdf72-51d0-4f7c-aefe-aef32fa71951', label: '55-64'})"
 
