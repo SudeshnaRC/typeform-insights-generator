@@ -30,14 +30,12 @@ class ResponsesRepository : IResponsesRepository, Logging {
     override fun nodeStatement(node: AnswerNode): String {
 
         return when (node.label) {
-            is String -> "MERGE (a:Answer { label: ${
-                URLDecoder.decode(
+            is String -> "MERGE (a:Answer { label: \"${
                     URLEncoder.encode(
                         node.label.lowercase(),
                         "utf-8"
-                    ), "utf-8"
-                )
-            } })"
+                    )
+            }\" })"
             else -> "MERGE (a:Answer { label: ${node.label} })"
         }
 
@@ -48,8 +46,8 @@ class ResponsesRepository : IResponsesRepository, Logging {
             .replace("\\p{P}".toRegex(), "")
             .replace(" ", "_")
             .uppercase()
-        return "MERGE (r)-[:$relationshipString { id: ${questionRelationship.id}," +
-                " type: ${questionRelationship.type} } ]->(a) "
+        return "MERGE (r)-[:$relationshipString { id: \"${questionRelationship.id}\"," +
+                " type: \"${questionRelationship.type}\" } ]->(a) "
 
     }
 

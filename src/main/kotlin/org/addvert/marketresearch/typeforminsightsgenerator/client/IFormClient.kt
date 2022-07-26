@@ -5,7 +5,6 @@ import io.micronaut.http.annotation.Header
 import io.micronaut.http.annotation.PathVariable
 import io.micronaut.http.client.annotation.Client
 import org.addvert.marketresearch.typeforminsightsgenerator.configuration.TypeformConfiguration
-import org.addvert.marketresearch.typeforminsightsgenerator.model.typeform.Form
 
 
 @Client(TypeformConfiguration.TYPEFORM_API_URL)

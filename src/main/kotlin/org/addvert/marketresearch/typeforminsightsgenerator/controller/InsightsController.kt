@@ -29,7 +29,6 @@ class InsightsController(
         const val emptyJsonString = """{}"""
         const val pageSize = 1000
     }
-
     //    @Delete("/{formId}")
 //    fun deleteFormData(@Parameter formId: String): HttpResponse<String>{
 //        //TODO: until persistance checks have been implemented,
