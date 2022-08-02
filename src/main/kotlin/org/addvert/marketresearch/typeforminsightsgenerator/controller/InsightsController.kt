@@ -6,7 +6,6 @@ import io.micronaut.context.annotation.Parameter
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Put
-import io.micronaut.http.annotation.QueryValue
 import org.addvert.marketresearch.typeforminsightsgenerator.client.IFormClient
 import org.addvert.marketresearch.typeforminsightsgenerator.client.IResponsesClient
 import org.addvert.marketresearch.typeforminsightsgenerator.configuration.TypeformConfiguration
@@ -14,6 +13,10 @@ import org.addvert.marketresearch.typeforminsightsgenerator.handler.IFormHandler
 import org.addvert.marketresearch.typeforminsightsgenerator.model.typeform.Form
 import org.addvert.marketresearch.typeforminsightsgenerator.model.typeform.Responses
 import org.apache.logging.log4j.kotlin.Logging
+import com.github.michaelbull.result.*
+import org.addvert.marketresearch.typeforminsightsgenerator.handler.error.ErrorMessage
+import org.addvert.marketresearch.typeforminsightsgenerator.handler.error.UnableToParseForm
+import org.addvert.marketresearch.typeforminsightsgenerator.handler.error.UnableToParseResponses
 
 
 @Controller("/insights")
@@ -28,7 +31,14 @@ class InsightsController(
     companion object {
         const val emptyJsonString = """{}"""
         const val pageSize = 1000
+
+        fun buildErrorResponse(message: ErrorMessage): HttpResponse<Any> {
+            return when (message) {
+                UnableToParseForm, UnableToParseResponses -> HttpResponse.badRequest()
+            }
+        }
     }
+
     //    @Delete("/{formId}")
 //    fun deleteFormData(@Parameter formId: String): HttpResponse<String>{
 //        //TODO: until persistance checks have been implemented,
@@ -37,27 +47,30 @@ class InsightsController(
 //    }
     //TODO: Should potentially be in a different controller, not technically insights
     @Put("/{formId}")
-    fun putFormData(@Parameter formId: String): HttpResponse<String> {
+    fun putFormData(@Parameter formId: String): HttpResponse<Any> {
 
         return try {
             //TODO: find out how to return form == null from Klaxon
-            val form = getFormByFormId(formId)
-            var responses = getResonsesByFormId(formId, pageSize, null)
+            getFormByFormId(formId).mapBoth(
+                { form -> formHandler.persistForm(form) },
+                { errorMessage -> return buildErrorResponse(errorMessage) }
+            )
+            var before: String? = null
+            var pageCount: Int = Int.MAX_VALUE
 
             //TODO: Check if form has previously been persisted
             //TODO: Check if response has been previously been persisted
-
-            if (form?.id != null && responses?.items != null) {
-                formHandler.persistForm(form)
-                while (responses?.pageCount!! >= 1) {
-                    formHandler.persistFormResponses(formId, responses)
-                    val before = responses.items!!.last().responseId
-                    responses = getResonsesByFormId(formId, pageSize, before)
-                }
-
-            } else {
-                return HttpResponse.badRequest("Form [$formId] does not contain necessary data.")
+            while (pageCount > 1) {
+                getResonsesByFormId(formId, pageSize, before).mapBoth(
+                    { responses ->
+                        formHandler.persistFormResponses(formId, responses)
+                        before = responses.items.last().responseId
+                        pageCount = responses.pageCount
+                    },
+                    { errorMessage -> return buildErrorResponse(errorMessage) }
+                )
             }
+
             HttpResponse.created("Form data items for [$formId] has been successfully persisted to database.")
 
         } catch (e: Exception) {
@@ -66,8 +79,8 @@ class InsightsController(
         }
     }
 
-    private fun getResonsesByFormId(formId: String, pageSize: Int?, before: String?): Responses? {
-        return Klaxon().parse<Responses>(
+    private fun getResonsesByFormId(formId: String, pageSize: Int?, before: String?): Result<Responses, ErrorMessage> {
+        val responses = Klaxon().parse<Responses>(
             responsesClient.fetchResponses(
                 "Bearer ${configuration.token}",
                 formId,
@@ -75,15 +88,26 @@ class InsightsController(
                 before
             ) ?: emptyJsonString
         )
+
+        return if (responses != null) {
+            Ok(responses)
+        } else {
+            Err(UnableToParseResponses)
+        }
     }
 
-    private fun getFormByFormId(formId: String): Form? {
-        return Klaxon().parse<Form>(
+    private fun getFormByFormId(formId: String): Result<Form, ErrorMessage> {
+        val form = Klaxon().parse<Form>(
             formClient.fetchForm(
                 "Bearer ${configuration.token}",
                 formId
             ) ?: emptyJsonString
         )
+        return if (form != null) {
+            Ok(form)
+        } else {
+            Err(UnableToParseForm)
+        }
     }
 //
 //    @Get("/{formId}")

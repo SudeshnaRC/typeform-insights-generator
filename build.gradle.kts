@@ -71,6 +71,7 @@ dependencies {
     runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin")
 
     testRuntimeOnly("org.neo4j.test:neo4j-harness")
+    implementation("com.michael-bull.kotlin-result:kotlin-result:1.1.16")
 
 }
 

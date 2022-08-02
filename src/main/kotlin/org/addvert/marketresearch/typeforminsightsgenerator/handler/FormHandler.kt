@@ -12,6 +12,7 @@ import org.addvert.marketresearch.typeforminsightsgenerator.model.typeform.Answe
 import org.addvert.marketresearch.typeforminsightsgenerator.model.typeform.Form
 import org.addvert.marketresearch.typeforminsightsgenerator.model.typeform.Responses
 import org.addvert.marketresearch.typeforminsightsgenerator.model.typeform.Responses.Item.Answer
+import org.addvert.marketresearch.typeforminsightsgenerator.model.typeform.Responses.Item.Answer.Field
 import org.addvert.marketresearch.typeforminsightsgenerator.model.typeform.Responses.Item.Answer.Choice
 import org.addvert.marketresearch.typeforminsightsgenerator.repository.IFormRepository
 import org.addvert.marketresearch.typeforminsightsgenerator.repository.IResponsesRepository
@@ -24,14 +25,14 @@ class FormHandler(
 ) : IFormHandler, Logging {
 
     override fun persistFormResponses(formId: String, responses: Responses) {
-        responses.items?.forEach { item ->
+        responses.items.forEach { item ->
             val respondentNode =
                 addRespondentNodeToInMemoryCypherQuery(item.responseId ?: throw InvalidResponseIDException(""))
 
-            item.answers?.forEach { answer ->
+            item.answers.forEach { answer ->
 
                 //TODO: Replace all generic exceptions in this class with custom exceptions
-                val questionId = answer.field?.ref ?: throw InvalidFormFieldRefException("")
+                val questionId = answer.field.ref
 
                 if (answer.type != AnswerType.CHOICES.name.lowercase()) {
                     val answerNode = addAnswerNodeToInMemoryCypherQuery(answer)
@@ -41,11 +42,14 @@ class FormHandler(
 
                 } else {
                     answer.choices?.let { choices ->
-                        choices.ids?.indices?.forEach {
+                        choices.ids.indices.forEach {
                             val simpleAnswer = Answer(
+                                field = Field(
+                                    ref = questionId
+                                ),
                                 type = AnswerType.CHOICE.name.lowercase(),
                                 choice = Choice(
-                                    label = choices.labels?.get(it)
+                                    label = choices.labels[it]
                                 )
                             )
 
@@ -64,16 +68,16 @@ class FormHandler(
     }
 
     override fun persistForm(form: Form) {
-        form.fields?.forEach { question ->
+        form.fields.forEach { question ->
             formRepository.update(
                 FormEntity(
                     formQuestion = FormQuestion(
-                        form.id ?: throw Exception(),
-                        question.ref ?: throw InvalidFormFieldRefException(""),
+                        form.id,
+                        question.ref
                     ),
                     form = PartialForm(form.id),
-                    questionTitle = question.title ?: throw Exception(),
-                    questionType = question.type ?: throw Exception()
+                    questionTitle = question.title,
+                    questionType = question.type
                 )
             )
         }
@@ -125,8 +129,7 @@ class FormHandler(
             }
             else -> {
                 answer.choice?.let {
-                    it.label?.let { label -> responsesRepository.nodeStatement(AnswerNode(label)) }
-                        ?: responsesRepository.nodeStatement(AnswerNode("other"))
+                    it.label.let { label -> responsesRepository.nodeStatement(AnswerNode(label)) }
                 }
             }
         } ?: throw Exception()
