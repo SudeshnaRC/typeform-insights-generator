@@ -1,0 +1,6 @@
+applicationType: default
+defaultPackage: org.addvert.marketresearch.typeforminsightsgenerator
+testFramework: spock
+sourceLanguage: kotlin
+buildTool: gradle_kotlin
+features: [annotation-api, app-name, gradle, http-client, kotlin, kotlin-application, netty-server, readme, shade, spock, yaml]
