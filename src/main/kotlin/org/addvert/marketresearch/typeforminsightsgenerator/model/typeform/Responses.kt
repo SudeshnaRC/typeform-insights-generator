@@ -4,23 +4,23 @@ import com.beust.klaxon.Json
 
 data class Responses(
     @Json(name = "total_items")
-    val totalItems: Int? = null,
+    val totalItems: Int,
     @Json(name = "page_count")
-    val pageCount: Int? = null,
+    val pageCount: Int,
     @Json(name = "items")
-    val items: List<Item>? = null
+    val items: List<Item>
 ) {
     data class Item(
         @Json(name = "response_id")
-        val responseId: String? = null,
+        val responseId: String,
         @Json(name = "answers")
-        val answers: List<Answer>? = null
+        val answers: List<Answer>
     ) {
         data class Answer(
             @Json(name = "field")
-            val field: Field? = null,
+            val field: Field,
             @Json(name = "type")
-            val type: String? = null,
+            val type: String,
             @Json(name = "text")
             val text: String? = null,
             @Json(name = "choice")
@@ -43,29 +43,21 @@ data class Responses(
             val payment: String? = null
         ) {
             data class Field(
-                @Json(name = "id")
-                val id: String? = null,
-                @Json(name = "type")
-                val type: String? = null,
                 @Json(name = "ref")
-                val ref: String? = null
+                val ref: String
             )
             data class Choice(
-                @Json(name = "id")
-                val id: String? = null,
-                @Json(name = "ref")
-                val ref: String? = null,
                 @Json(name = "label")
-                val label: String? = null
+                val label: String
             )
 
             data class Choices(
                 @Json(name = "ids")
-                val ids: List<String>? = null,
+                val ids: List<String>,
                 @Json(name = "refs")
-                val refs: List<String>? = null,
+                val refs: List<String>,
                 @Json(name = "labels")
-                val labels: List<String>? = null
+                val labels: List<String>
             )
         }
     }

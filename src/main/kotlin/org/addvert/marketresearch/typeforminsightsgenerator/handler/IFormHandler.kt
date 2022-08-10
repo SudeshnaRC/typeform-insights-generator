@@ -1,11 +1,22 @@
 package org.addvert.marketresearch.typeforminsightsgenerator.handler
 
-import org.addvert.marketresearch.typeforminsightsgenerator.model.psql.FormQuestion
-import org.addvert.marketresearch.typeforminsightsgenerator.model.typeform.Form
-import org.addvert.marketresearch.typeforminsightsgenerator.model.typeform.Responses
+import com.github.michaelbull.result.Result
+import io.micronaut.http.HttpResponse
+import org.addvert.marketresearch.typeforminsightsgenerator.handler.error.*
+import org.addvert.marketresearch.typeforminsightsgenerator.model.psql.FormEntity
 
 interface IFormHandler {
-    fun persistFormResponses(formId: String, responses: Responses)
-    fun persistForm(form: Form)
+    companion object {
+        fun buildErrorResponse(message: ErrorMessage): HttpResponse<Any> {
+            return when (message) {
+                UnableToParseForm, UnableToParseResponses -> HttpResponse.badRequest()
+                FormNotFound, ResponsesNotFound -> HttpResponse.notFound()
+                UnmatchedAnswerAttribute -> HttpResponse.serverError()
+            }
+        }
+    }
+
+    fun persistFormIfFound(formId: String): Result<List<FormEntity>, ErrorMessage>
+    fun persistResponsesIfFound(formId: String): Result<Unit, ErrorMessage>
 
 }
